@@ -16,18 +16,15 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "event_name", nullable = false, length = 255)
-    private String eventName;
+    @Column(name = "title", nullable = false)
+    private String title;
 
-    @Column(name = "event_date", nullable = false)
-    private LocalDateTime eventDate;
-
-    @Column(length = 255)
-    private String venue;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startTime;
 
     @Column(nullable = false)
     private String status;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

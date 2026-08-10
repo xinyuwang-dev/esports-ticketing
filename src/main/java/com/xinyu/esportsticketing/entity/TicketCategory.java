@@ -28,13 +28,13 @@ public class TicketCategory {
     @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    @Column(name = "total_seats", nullable = false)
-    private Integer totalSeats;
+    @Column(name = "initial_stock", nullable = false)
+    private Integer initialStock;
 
-    @Column(name = "available_seats", nullable = false)
-    private Integer availableSeats;
+    @Column(name = "available_stock", nullable = false)
+    private Integer availableStock;
 
     // The switch for our dynamic pricing feature!
     @Column(name = "is_dynamic_pricing", nullable = false)
-    private Boolean isDynamicPricing;
+    private Boolean dynamicPricing;
 }
