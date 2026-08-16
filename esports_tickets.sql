@@ -122,7 +122,7 @@ CREATE TABLE `ticket_category` (
   PRIMARY KEY (`id`),
   KEY `event_id` (`event_id`),
   CONSTRAINT `ticket_category_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `event` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -131,6 +131,7 @@ CREATE TABLE `ticket_category` (
 
 LOCK TABLES `ticket_category` WRITE;
 /*!40000 ALTER TABLE `ticket_category` DISABLE KEYS */;
+INSERT INTO `ticket_category` VALUES (3,1,'Standard',100,80.00,100,0),(4,1,'VIP',20,300.00,20,1);
 /*!40000 ALTER TABLE `ticket_category` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -172,4 +173,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-04 14:37:33
+-- Dump completed on 2026-08-16 14:07:32
