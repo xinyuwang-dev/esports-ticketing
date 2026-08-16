@@ -39,6 +39,7 @@ public class TicketCategoryControllerTest {
         mockMvc.perform(get("/api/events/1/ticket-categories"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].categoryName").value("Standard"))
-                .andExpect(jsonPath("$[1].categoryName").value("VIP"));
+                .andExpect(jsonPath("$[1].categoryName").value("VIP"))
+                .andExpect(jsonPath("$[0].event").doesNotExist());
     }
 }

@@ -1,5 +1,6 @@
 package com.xinyu.esportsticketing.controller;
 
+import com.xinyu.esportsticketing.dto.TicketCategoryResponse;
 import com.xinyu.esportsticketing.entity.TicketCategory;
 import com.xinyu.esportsticketing.service.TicketCategoryService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +21,12 @@ public class TicketCategoryController {
     }
 
     @GetMapping("/{eventId}/ticket-categories")
-    public List<TicketCategory> getCategoriesByEventId(
+    public List<TicketCategoryResponse> getCategoriesByEventId(
             @PathVariable Integer eventId) {
 
-        return ticketCategoryService.getCategoriesByEventId(eventId);
+        return ticketCategoryService.getCategoriesByEventId(eventId)
+                .stream()
+                .map(TicketCategoryResponse::fromEntity)
+                .toList();
     }
 }
