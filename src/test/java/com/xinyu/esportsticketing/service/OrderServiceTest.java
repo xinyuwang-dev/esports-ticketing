@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -52,6 +53,7 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
+        ticketCategory.setAvailableStock(100);
         Order result = orderService.createOrder(1, 3);
 
         assertEquals(user, result.getUser());
@@ -59,8 +61,33 @@ class OrderServiceTest {
         assertEquals(new BigDecimal("80.00"), result.getFinalAmount());
         assertEquals(Order.Status.PENDING, result.getStatus());
 
+        assertEquals(99, ticketCategory.getAvailableStock());
+
         verify(userRepository).findById(1);
         verify(ticketCategoryRepository).findById(3);
         verify(orderRepository).save(any(Order.class));
+    }
+
+    @Test
+    void shouldNotCreateOrderWhenSoldOut() {
+
+        User user = new User();
+
+        TicketCategory ticketCategory = new TicketCategory();
+        ticketCategory.setBasePrice(new BigDecimal("80.00"));
+        ticketCategory.setAvailableStock(0);
+
+        when(userRepository.findById(1))
+                .thenReturn(Optional.of(user));
+
+        when(ticketCategoryRepository.findById(3))
+                .thenReturn(Optional.of(ticketCategory));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> orderService.createOrder(1, 3)
+        );
+
+        verify(orderRepository, never()).save(any(Order.class));
     }
 }
