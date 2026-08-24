@@ -35,7 +35,7 @@ public class OrderService {
                 .orElseThrow();
 
         TicketCategory ticketCategory =
-                ticketCategoryRepository.findById(categoryId)
+                ticketCategoryRepository.findByIdForUpdate(categoryId)
                         .orElseThrow();
 
         // Check that the selected ticket category still has available stock.

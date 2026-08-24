@@ -46,7 +46,7 @@ class OrderServiceTest {
         when(userRepository.findById(1))
                 .thenReturn(Optional.of(user));
 
-        when(ticketCategoryRepository.findById(3))
+        when(ticketCategoryRepository.findByIdForUpdate(3))
                 .thenReturn(Optional.of(ticketCategory));
 
         // Return the same order passed into save(), simulating repository persistence.
@@ -64,7 +64,7 @@ class OrderServiceTest {
         assertEquals(99, ticketCategory.getAvailableStock());
 
         verify(userRepository).findById(1);
-        verify(ticketCategoryRepository).findById(3);
+        verify(ticketCategoryRepository).findByIdForUpdate(3);
         verify(orderRepository).save(any(Order.class));
     }
 
@@ -80,7 +80,7 @@ class OrderServiceTest {
         when(userRepository.findById(1))
                 .thenReturn(Optional.of(user));
 
-        when(ticketCategoryRepository.findById(3))
+        when(ticketCategoryRepository.findByIdForUpdate(3))
                 .thenReturn(Optional.of(ticketCategory));
 
         assertThrows(
