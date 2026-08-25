@@ -32,6 +32,9 @@ class OrderServiceTest {
     @Mock
     private TicketCategoryRepository ticketCategoryRepository;
 
+    @Mock
+    private DynamicPricingService dynamicPricingService;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -49,6 +52,9 @@ class OrderServiceTest {
         when(ticketCategoryRepository.findByIdForUpdate(3))
                 .thenReturn(Optional.of(ticketCategory));
 
+        when(dynamicPricingService.calculatePrice(ticketCategory))
+                .thenReturn(new BigDecimal("120.00"));
+
         // Return the same order passed into save(), simulating repository persistence.
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -58,7 +64,7 @@ class OrderServiceTest {
 
         assertEquals(user, result.getUser());
         assertEquals(ticketCategory, result.getTicketCategory());
-        assertEquals(new BigDecimal("80.00"), result.getFinalAmount());
+        assertEquals(new BigDecimal("120.00"), result.getFinalAmount());
         assertEquals(Order.Status.PENDING, result.getStatus());
 
         assertEquals(99, ticketCategory.getAvailableStock());

@@ -9,22 +9,27 @@ import com.xinyu.esportsticketing.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final TicketCategoryRepository ticketCategoryRepository;
+    private final DynamicPricingService dynamicPricingService;
 
     // Constructor injection keeps dependencies explicit and easy to test.
     public OrderService(
             OrderRepository orderRepository,
             UserRepository userRepository,
-            TicketCategoryRepository ticketCategoryRepository) {
+            TicketCategoryRepository ticketCategoryRepository,
+            DynamicPricingService dynamicPricingService) {
 
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.ticketCategoryRepository = ticketCategoryRepository;
+        this.dynamicPricingService = dynamicPricingService;
     }
 
     @Transactional
@@ -43,6 +48,9 @@ public class OrderService {
             throw new IllegalStateException("Ticket is sold out");
         }
 
+        BigDecimal finalAmount =
+                dynamicPricingService.calculatePrice(ticketCategory);
+
         // One successful order currently represents one ticket purchase.
         ticketCategory.setAvailableStock(
                 ticketCategory.getAvailableStock() - 1
@@ -55,7 +63,7 @@ public class OrderService {
         Order order = new Order(
                 user,
                 ticketCategory,
-                ticketCategory.getBasePrice(),
+                finalAmount,
                 Order.Status.PENDING
         );
 
