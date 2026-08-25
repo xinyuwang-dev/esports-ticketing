@@ -102,4 +102,82 @@ class OrderConcurrencyTest {
         assertEquals(1, successCount.get());
         assertEquals(0, finalCategory.getAvailableStock());
     }
+
+    @Test
+    void shouldPreventOversellingUnderHighConcurrency()
+            throws InterruptedException {
+
+        int initialStock = 100;
+        int requestCount = 1000;
+        int threadCount = 50;
+
+        Integer userId = userRepository.findById(1)
+                .orElseThrow()
+                .getId();
+
+        Event event = eventRepository.findById(1)
+                .orElseThrow();
+
+        TicketCategory ticketCategory = new TicketCategory();
+        ticketCategory.setEvent(event);
+        ticketCategory.setCategoryName("High Concurrency Test");
+        ticketCategory.setBasePrice(new BigDecimal("80.00"));
+        ticketCategory.setInitialStock(initialStock);
+        ticketCategory.setAvailableStock(initialStock);
+        ticketCategory.setDynamicPricing(false);
+
+        ticketCategory = ticketCategoryRepository.save(ticketCategory);
+
+        Integer categoryId = ticketCategory.getId();
+
+        ExecutorService executorService =
+                Executors.newFixedThreadPool(threadCount);
+
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(requestCount);
+
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        for (int i = 0; i < requestCount; i++) {
+
+            executorService.submit(() -> {
+                try {
+                    startLatch.await();
+
+                    orderService.createOrder(userId, categoryId);
+
+                    successCount.incrementAndGet();
+
+                } catch (Exception e) {
+                    failureCount.incrementAndGet();
+
+                } finally {
+                    finishLatch.countDown();
+                }
+            });
+        }
+
+        // Start all waiting purchase attempts.
+        startLatch.countDown();
+
+        // Wait until all 1000 requests have finished.
+        finishLatch.await();
+
+        executorService.shutdown();
+
+        TicketCategory finalCategory =
+                ticketCategoryRepository.findById(categoryId)
+                        .orElseThrow();
+
+        System.out.println("Successful orders: " + successCount.get());
+        System.out.println("Failed orders: " + failureCount.get());
+        System.out.println("Final available stock: " + finalCategory.getAvailableStock());
+
+        assertEquals(initialStock, successCount.get());
+        assertEquals(requestCount - initialStock, failureCount.get());
+        assertEquals(0, finalCategory.getAvailableStock());
+    }
+
+
 }
