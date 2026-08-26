@@ -1,17 +1,20 @@
 package com.xinyu.esportsticketing.service;
 
 import com.xinyu.esportsticketing.entity.Event;
+import com.xinyu.esportsticketing.entity.Order;
 import com.xinyu.esportsticketing.entity.TicketCategory;
 import com.xinyu.esportsticketing.entity.User;
 import com.xinyu.esportsticketing.repository.EventRepository;
 import com.xinyu.esportsticketing.repository.OrderRepository;
 import com.xinyu.esportsticketing.repository.TicketCategoryRepository;
 import com.xinyu.esportsticketing.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +40,8 @@ class OrderConcurrencyTest {
     @Autowired
     private UserRepository userRepository;
 
+    private Integer testCategoryId;
+
     @Test
     void shouldExposeOversellingProblem() throws InterruptedException {
 
@@ -55,7 +60,8 @@ class OrderConcurrencyTest {
         ticketCategory.setDynamicPricing(false);
 
         ticketCategory = ticketCategoryRepository.save(ticketCategory);
-        Integer categoryId = ticketCategory.getId();
+        testCategoryId = ticketCategory.getId();
+        Integer categoryId = testCategoryId;
 
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -128,7 +134,8 @@ class OrderConcurrencyTest {
 
         ticketCategory = ticketCategoryRepository.save(ticketCategory);
 
-        Integer categoryId = ticketCategory.getId();
+        testCategoryId = ticketCategory.getId();
+        Integer categoryId = testCategoryId;
 
         ExecutorService executorService =
                 Executors.newFixedThreadPool(threadCount);
@@ -177,6 +184,22 @@ class OrderConcurrencyTest {
         assertEquals(initialStock, successCount.get());
         assertEquals(requestCount - initialStock, failureCount.get());
         assertEquals(0, finalCategory.getAvailableStock());
+    }
+
+    @AfterEach
+    void cleanUpTestData() {
+
+        if (testCategoryId != null) {
+
+            List<Order> testOrders =
+                    orderRepository.findByTicketCategoryId(testCategoryId);
+
+            orderRepository.deleteAll(testOrders);
+
+            ticketCategoryRepository.deleteById(testCategoryId);
+
+            testCategoryId = null;
+        }
     }
 
 
