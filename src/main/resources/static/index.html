@@ -59,13 +59,44 @@
 
                 tickets.forEach(ticket => {
                     ticketList.innerHTML += `
-                    <div>
-                        <h3>${ticket.categoryName}</h3>
-                        <p>Price: £${ticket.basePrice}</p>
-                        <p>Available: ${ticket.availableStock}</p>
-                    </div>
-                `;
+                      <div>
+                         <h3>${ticket.categoryName}</h3>
+                         <p>Base Price: £${ticket.basePrice}</p>
+
+                         ${ticket.dynamicPricing
+                            ? `<p>Current Price: £${ticket.currentPrice}</p>
+                            <p>Dynamic Pricing: Enabled</p>`
+                            : `<p>Fixed Price</p>`}
+
+                         <p>Available: ${ticket.availableStock}</p>
+
+                         <button onclick="purchaseTicket(${ticket.id}, ${eventId})">
+                            Buy Ticket
+                         </button>
+                      </div>
+                    `;
                 });
+            });
+    }
+
+    function purchaseTicket(categoryId, eventId) {
+
+        fetch("/api/orders", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userId: 1,
+                categoryId: categoryId
+            })
+        })
+            .then(response => response.json())
+            .then(order => {
+                alert(
+                    `Order created!\nOrder ID: ${order.id}\nFinal amount: £${order.finalAmount}`
+                );
+                loadTickets(eventId);
             });
     }
 </script>
