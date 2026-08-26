@@ -71,4 +71,34 @@ class DynamicPricingServiceTest {
 
         assertEquals(new BigDecimal("80.00"), result);
     }
+
+    @Test
+    void shouldReturnBasePriceWhenStockIsExactlyFiftyPercent() {
+
+        TicketCategory ticketCategory = new TicketCategory();
+        ticketCategory.setBasePrice(new BigDecimal("300.00"));
+        ticketCategory.setInitialStock(20);
+        ticketCategory.setAvailableStock(10);
+        ticketCategory.setDynamicPricing(true);
+
+        BigDecimal result =
+                dynamicPricingService.calculatePrice(ticketCategory);
+
+        assertEquals(new BigDecimal("300.00"), result);
+    }
+
+    @Test
+    void shouldIncreasePriceByTwentyPercentWhenStockIsExactlyTwentyFivePercent() {
+
+        TicketCategory ticketCategory = new TicketCategory();
+        ticketCategory.setBasePrice(new BigDecimal("300.00"));
+        ticketCategory.setInitialStock(20);
+        ticketCategory.setAvailableStock(5);
+        ticketCategory.setDynamicPricing(true);
+
+        BigDecimal result =
+                dynamicPricingService.calculatePrice(ticketCategory);
+
+        assertEquals(new BigDecimal("360.000"), result);
+    }
 }
