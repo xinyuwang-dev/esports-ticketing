@@ -2,6 +2,7 @@ package com.xinyu.esportsticketing.controller;
 
 import com.xinyu.esportsticketing.dto.TicketCategoryResponse;
 import com.xinyu.esportsticketing.entity.TicketCategory;
+import com.xinyu.esportsticketing.service.DynamicPricingService;
 import com.xinyu.esportsticketing.service.TicketCategoryService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,9 +16,13 @@ import java.util.List;
 public class TicketCategoryController {
 
     private final TicketCategoryService ticketCategoryService;
+    private final DynamicPricingService dynamicPricingService;
 
-    public TicketCategoryController(TicketCategoryService ticketCategoryService) {
+    public TicketCategoryController(TicketCategoryService ticketCategoryService,
+                                    DynamicPricingService dynamicPricingService) {
+
         this.ticketCategoryService = ticketCategoryService;
+        this.dynamicPricingService = dynamicPricingService;
     }
 
     @GetMapping("/{eventId}/ticket-categories")
@@ -26,7 +31,10 @@ public class TicketCategoryController {
 
         return ticketCategoryService.getCategoriesByEventId(eventId)
                 .stream()
-                .map(TicketCategoryResponse::fromEntity)
+                .map(category -> TicketCategoryResponse.fromEntity(
+                        category,
+                        dynamicPricingService.calculatePrice(category)
+                ))
                 .toList();
     }
 }

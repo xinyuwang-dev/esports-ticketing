@@ -12,6 +12,7 @@ public class TicketCategoryResponse {
     private Integer initialStock;
     private Integer availableStock;
     private Boolean dynamicPricing;
+    private BigDecimal currentPrice;
 
     public TicketCategoryResponse(
             Integer id,
@@ -19,7 +20,8 @@ public class TicketCategoryResponse {
             BigDecimal basePrice,
             Integer initialStock,
             Integer availableStock,
-            Boolean dynamicPricing) {
+            Boolean dynamicPricing,
+            BigDecimal currentPrice) {
 
         this.id = id;
         this.categoryName = categoryName;
@@ -27,6 +29,7 @@ public class TicketCategoryResponse {
         this.initialStock = initialStock;
         this.availableStock = availableStock;
         this.dynamicPricing = dynamicPricing;
+        this.currentPrice = currentPrice;
     }
 
     public Integer getId() {
@@ -53,14 +56,19 @@ public class TicketCategoryResponse {
         return dynamicPricing;
     }
 
-    public static TicketCategoryResponse fromEntity(TicketCategory category) {
+    public BigDecimal getCurrentPrice() {   return currentPrice; }
+
+    public static TicketCategoryResponse fromEntity(
+            TicketCategory category,
+            BigDecimal currentPrice) {
         return new TicketCategoryResponse(
                 category.getId(),
                 category.getCategoryName(),
                 category.getBasePrice(),
                 category.getInitialStock(),
                 category.getAvailableStock(),
-                category.getDynamicPricing()
+                category.getDynamicPricing(),
+                currentPrice
         );
     }
 }
