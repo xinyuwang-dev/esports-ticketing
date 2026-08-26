@@ -1,10 +1,10 @@
-### Create a Standard ticket order
+### Create a VIP ticket order with dynamic pricing
 POST http://localhost:8080/api/orders
 Content-Type: application/json
 
 {
   "userId": 1,
-  "categoryId": 3
+  "categoryId": 4
 }
 
 ### Test client-side price manipulation
@@ -13,6 +13,6 @@ Content-Type: application/json
 
 {
   "userId": 1,
-  "categoryId": 3,
+  "categoryId": 4,
   "finalAmount": 10
 }
