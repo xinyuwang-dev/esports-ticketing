@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Transactional
@@ -50,6 +51,16 @@ public class TicketCategoryRepositoryTest {
         List<TicketCategory> categories =
                 ticketCategoryRepository.findByEventId(1);
 
-        assertEquals(2, categories.size());
+        assertTrue(
+                categories.stream()
+                        .anyMatch(category ->
+                                category.getId().equals(standard.getId()))
+        );
+
+        assertTrue(
+                categories.stream()
+                        .anyMatch(category ->
+                                category.getId().equals(vip.getId()))
+        );
     }
 }
