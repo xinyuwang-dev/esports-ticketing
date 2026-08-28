@@ -7,6 +7,7 @@ import com.xinyu.esportsticketing.dto.UserResponse;
 import com.xinyu.esportsticketing.entity.User;
 import com.xinyu.esportsticketing.exception.DuplicateUserException;
 import com.xinyu.esportsticketing.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(
-            @RequestBody RegisterRequest request) {
+            @   Valid @RequestBody RegisterRequest request) {
 
         User user = userService.register(
                 request.getUsername(),

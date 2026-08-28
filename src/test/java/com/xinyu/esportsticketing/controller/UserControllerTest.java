@@ -11,7 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -169,5 +170,59 @@ class UserControllerTest {
                             }
                             """))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenRegistrationFieldsAreBlank() throws Exception {
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "",
+                              "email": "",
+                              "password": ""
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+
+        verify(userService, never())
+                .register(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "new_user",
+                              "email": "1",
+                              "password": "Hello123!"
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+
+        verify(userService, never())
+                .register(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenPasswordIsTooShort() throws Exception {
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "new_user",
+                              "email": "new@example.com",
+                              "password": "123"
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+
+        verify(userService, never())
+                .register(anyString(), anyString(), anyString());
     }
 }

@@ -23,6 +23,25 @@
     <p id="login-message"></p>
 </section>
 
+<section id="register-section">
+
+    <h2>Register</h2>
+
+    <label for="register-username">Username:</label>
+    <input id="register-username" type="text">
+
+    <label for="register-email">Email:</label>
+    <input id="register-email" type="email">
+
+    <label for="register-password">Password:</label>
+    <input id="register-password" type="password">
+
+    <button onclick="register()">Register</button>
+
+    <p id="register-message"></p>
+
+</section>
+
 <h1>E-Sports Ticketing System</h1>
 
 <p>Find and purchase tickets for upcoming e-sports events.</p>
@@ -158,6 +177,58 @@
                     `Order created!\nOrder ID: ${order.id}\nFinal amount: £${order.finalAmount}`
                 );
                 loadTickets(eventId);
+            });
+    }
+
+    function register() {
+
+        const username =
+            document.getElementById("register-username").value;
+
+        const email =
+            document.getElementById("register-email").value;
+
+        const password =
+            document.getElementById("register-password").value;
+
+        const message =
+            document.getElementById("register-message");
+
+        fetch("/api/users/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password
+            })
+        })
+            .then(response => {
+
+                if (response.status === 201) {
+                    return response.json();
+                }
+
+                if (response.status === 400) {
+                    throw new Error(
+                        "Please enter a valid username, email, and password of at least 8 characters."
+                    );
+                }
+
+                if (response.status === 409) {
+                    throw new Error("Username or email already exists.");
+                }
+
+                throw new Error("Registration failed.");
+            })
+            .then(user => {
+                message.textContent =
+                    `Registration successful. You can now log in as ${user.username}.`;
+            })
+            .catch(error => {
+                message.textContent = error.message;
             });
     }
 </script>
