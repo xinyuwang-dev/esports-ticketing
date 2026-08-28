@@ -9,6 +9,20 @@
 
 <body>
 
+<section id="login-section">
+    <h2>Login</h2>
+
+    <label for="username">Username:</label>
+    <input id="username" type="text">
+
+    <label for="password">Password:</label>
+    <input id="password" type="password">
+
+    <button onclick="login()">Login</button>
+
+    <p id="login-message"></p>
+</section>
+
 <h1>E-Sports Ticketing System</h1>
 
 <p>Find and purchase tickets for upcoming e-sports events.</p>
@@ -25,6 +39,48 @@
 </div>
 
 <script>
+
+    let currentUser = null;
+
+    function login() {
+
+        const username =
+            document.getElementById("username").value;
+
+        const password =
+            document.getElementById("password").value;
+
+        fetch("/api/users/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Invalid username or password");
+                }
+
+                return response.json();
+            })
+            .then(user => {
+                currentUser = user;
+
+                document.getElementById("login-message").textContent =
+                    "Login successful. Welcome, " + user.username;
+            })
+            .catch(error => {
+                currentUser = null;
+
+                document.getElementById("login-message").textContent =
+                    "Invalid username or password";
+            });
+    }
+
     fetch("/api/events")
         .then(response => response.json())
         .then(events => {
@@ -81,13 +137,18 @@
 
     function purchaseTicket(categoryId, eventId) {
 
+        if (currentUser === null) {
+            alert("Please login before purchasing a ticket.");
+            return;
+        }
+
         fetch("/api/orders", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                userId: 1,
+                userId: currentUser.id,
                 categoryId: categoryId
             })
         })
