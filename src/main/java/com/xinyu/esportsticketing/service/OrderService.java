@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -30,6 +31,10 @@ public class OrderService {
         this.userRepository = userRepository;
         this.ticketCategoryRepository = ticketCategoryRepository;
         this.dynamicPricingService = dynamicPricingService;
+    }
+
+    public List<Order> getOrdersByUserId(Integer userId) {
+        return orderRepository.findByUserId(userId);
     }
 
     @Transactional

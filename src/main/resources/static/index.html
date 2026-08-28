@@ -42,6 +42,16 @@
 
 </section>
 
+<section id="orders-section">
+
+    <h2>My Orders</h2>
+
+    <button onclick="loadMyOrders()">Load My Orders</button>
+
+    <div id="orders-list"></div>
+
+</section>
+
 <h1>E-Sports Ticketing System</h1>
 
 <p>Find and purchase tickets for upcoming e-sports events.</p>
@@ -229,6 +239,43 @@
             })
             .catch(error => {
                 message.textContent = error.message;
+            });
+    }
+
+    function loadMyOrders() {
+
+        if (currentUser === null) {
+            alert("Please login before viewing your orders.");
+            return;
+        }
+
+        fetch(`/api/orders/user/${currentUser.id}`)
+            .then(response => response.json())
+            .then(orders => {
+
+                const ordersList =
+                    document.getElementById("orders-list");
+
+                ordersList.innerHTML = "";
+
+                if (orders.length === 0) {
+                    ordersList.innerHTML = "<p>You have no orders yet.</p>";
+                    return;
+                }
+
+                orders.forEach(order => {
+
+                    ordersList.innerHTML += `
+                    <div>
+                        <p>Order ID: ${order.id}</p>
+                        <p>Ticket: ${order.categoryName}</p>
+                        <p>Final Amount: £${order.finalAmount}</p>
+                        <p>Status: ${order.status}</p>
+                        <p>Created At: ${order.createdAt}</p>
+                        <hr>
+                    </div>
+                `;
+                });
             });
     }
 </script>

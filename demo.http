@@ -53,3 +53,6 @@ Content-Type: application/json
   "username": "register_demo",
   "password": "{{registerPassword}}"
 }
+
+### Get order history for user 1
+GET http://localhost:8080/api/orders/user/1

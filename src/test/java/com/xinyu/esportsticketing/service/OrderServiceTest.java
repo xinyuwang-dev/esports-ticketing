@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,5 +96,39 @@ class OrderServiceTest {
         );
 
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldReturnOrdersByUserId() {
+
+        User user = new User();
+        TicketCategory ticketCategory = new TicketCategory();
+
+        Order order1 = new Order(
+                user,
+                ticketCategory,
+                new BigDecimal("80.00"),
+                Order.Status.PENDING
+        );
+
+        Order order2 = new Order(
+                user,
+                ticketCategory,
+                new BigDecimal("300.00"),
+                Order.Status.PENDING
+        );
+
+            List<Order> expectedOrders = List.of(order1, order2);
+
+        when(orderRepository.findByUserId(1))
+                .thenReturn(expectedOrders);
+
+        List<Order> result =
+                orderService.getOrdersByUserId(1);
+
+        assertEquals(expectedOrders, result);
+
+        verify(orderRepository)
+                .findByUserId(1);
     }
 }

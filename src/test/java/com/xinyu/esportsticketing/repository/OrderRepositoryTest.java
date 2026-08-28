@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,5 +52,61 @@ class OrderRepositoryTest {
                 savedOrder.getFinalAmount());
         assertEquals(Order.Status.PENDING,
                 savedOrder.getStatus());
+    }
+
+    @Test
+    void shouldFindOrdersByUserId() {
+
+        User userA = userRepository.findById(1)
+                .orElseThrow();
+
+        User userB = userRepository.findById(2)
+                .orElseThrow();
+
+        TicketCategory ticketCategory = ticketCategoryRepository.findById(3)
+                .orElseThrow();
+
+        Order orderA1 = new Order(
+                userA,
+                ticketCategory,
+                new BigDecimal("80.00"),
+                Order.Status.PENDING
+        );
+
+        Order orderA2 = new Order(
+                userA,
+                ticketCategory,
+                new BigDecimal("80.00"),
+                Order.Status.PENDING
+        );
+
+        Order orderB = new Order(
+                userB,
+                ticketCategory,
+                new BigDecimal("80.00"),
+                Order.Status.PENDING
+        );
+
+        orderRepository.save(orderA1);
+        orderRepository.save(orderA2);
+        orderRepository.save(orderB);
+
+        List<Order> userAOrders =
+                orderRepository.findByUserId(userA.getId());
+
+        assertTrue(
+                userAOrders.stream()
+                        .anyMatch(order -> order.getId().equals(orderA1.getId()))
+        );
+
+        assertTrue(
+                userAOrders.stream()
+                        .anyMatch(order -> order.getId().equals(orderA2.getId()))
+        );
+
+        assertFalse(
+                userAOrders.stream()
+                        .anyMatch(order -> order.getId().equals(orderB.getId()))
+        );
     }
 }

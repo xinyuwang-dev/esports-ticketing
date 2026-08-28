@@ -13,6 +13,7 @@ public class OrderResponse {
     private BigDecimal finalAmount;
     private String status;
     private LocalDateTime createdAt;
+    private String categoryName;
 
     public OrderResponse(
             Integer id,
@@ -20,7 +21,8 @@ public class OrderResponse {
             Integer categoryId,
             BigDecimal finalAmount,
             String status,
-            LocalDateTime createdAt) {
+            LocalDateTime createdAt,
+            String categoryName) {
 
         this.id = id;
         this.userId = userId;
@@ -28,6 +30,7 @@ public class OrderResponse {
         this.finalAmount = finalAmount;
         this.status = status;
         this.createdAt = createdAt;
+        this.categoryName = categoryName;
     }
 
     // Convert the JPA entity into a clean API response.
@@ -38,7 +41,8 @@ public class OrderResponse {
                 order.getTicketCategory().getId(),
                 order.getFinalAmount(),
                 order.getStatus().name(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getTicketCategory().getCategoryName()
         );
     }
 
@@ -65,4 +69,6 @@ public class OrderResponse {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public String getCategoryName() { return categoryName; }
 }

@@ -4,10 +4,9 @@ import com.xinyu.esportsticketing.dto.CreateOrderRequest;
 import com.xinyu.esportsticketing.dto.OrderResponse;
 import com.xinyu.esportsticketing.entity.Order;
 import com.xinyu.esportsticketing.service.OrderService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -28,5 +27,15 @@ public class OrderController {
         );
 
         return OrderResponse.fromEntity(order);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<OrderResponse> getOrdersByUserId(
+            @PathVariable Integer userId) {
+
+        return orderService.getOrdersByUserId(userId)
+                .stream()
+                .map(OrderResponse::fromEntity)
+                .toList();
     }
 }
