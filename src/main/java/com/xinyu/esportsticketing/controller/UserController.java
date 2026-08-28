@@ -2,8 +2,10 @@ package com.xinyu.esportsticketing.controller;
 
 import com.xinyu.esportsticketing.dto.LoginRequest;
 import com.xinyu.esportsticketing.dto.LoginResponse;
+import com.xinyu.esportsticketing.dto.RegisterRequest;
 import com.xinyu.esportsticketing.dto.UserResponse;
 import com.xinyu.esportsticketing.entity.User;
+import com.xinyu.esportsticketing.exception.DuplicateUserException;
 import com.xinyu.esportsticketing.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,30 @@ public class UserController {
         return ResponseEntity.ok(
                 LoginResponse.fromEntity(user)
         );
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<UserResponse> register(
+            @RequestBody RegisterRequest request) {
+
+        User user = userService.register(
+                request.getUsername(),
+                request.getEmail(),
+                request.getPassword()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(UserResponse.fromEntity(user));
+    }
+
+    @ExceptionHandler(DuplicateUserException.class)
+    public ResponseEntity<Void> handleDuplicateUser(
+            DuplicateUserException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

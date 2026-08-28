@@ -11,8 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,6 +71,72 @@ class UserServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> userService.login("unknown_user", "Demo123!")
+        );
+    }
+
+    @Test
+    void shouldRegisterNewUser() {
+
+        when(userRepository.findByUsername("new_user"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.findByEmail("new@example.com"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.register(
+                "new_user",
+                "new@example.com",
+                "Hello123!"
+        );
+
+        assertEquals("new_user", result.getUsername());
+        assertEquals("new@example.com", result.getEmail());
+
+        assertTrue(
+                new BCryptPasswordEncoder()
+                        .matches("Hello123!", result.getPasswordHash())
+        );
+    }
+
+    @Test
+    void shouldRejectDuplicateUsername() {
+
+        User existingUser = new User();
+
+        when(userRepository.findByUsername("new_user"))
+                .thenReturn(Optional.of(existingUser));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.register(
+                        "new_user",
+                        "new@example.com",
+                        "Hello123!"
+                )
+        );
+    }
+
+    @Test
+    void shouldRejectDuplicateEmail() {
+
+        when(userRepository.findByUsername("new_user"))
+                .thenReturn(Optional.empty());
+
+        User existingUser = new User();
+
+        when(userRepository.findByEmail("new@example.com"))
+                .thenReturn(Optional.of(existingUser));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.register(
+                        "new_user",
+                        "new@example.com",
+                        "Hello123!"
+                )
         );
     }
 }

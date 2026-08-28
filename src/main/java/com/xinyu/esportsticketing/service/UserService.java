@@ -1,6 +1,7 @@
 package com.xinyu.esportsticketing.service;
 
 import com.xinyu.esportsticketing.entity.User;
+import com.xinyu.esportsticketing.exception.DuplicateUserException;
 import com.xinyu.esportsticketing.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,5 +32,26 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public User register(String username, String email, String password) {
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new DuplicateUserException("Username already exists");
+        }
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new DuplicateUserException("Email already exists");
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+
+        user.setPasswordHash(
+                passwordEncoder.encode(password)
+        );
+
+        return userRepository.save(user);
     }
 }

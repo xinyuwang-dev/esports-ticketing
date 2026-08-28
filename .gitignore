@@ -33,3 +33,5 @@ build/
 .vscode/
 
 http-client.private.env.json
+
+alltest.run/

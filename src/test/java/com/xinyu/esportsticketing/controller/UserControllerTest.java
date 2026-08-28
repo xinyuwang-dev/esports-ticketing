@@ -1,6 +1,7 @@
 package com.xinyu.esportsticketing.controller;
 
 import com.xinyu.esportsticketing.entity.User;
+import com.xinyu.esportsticketing.exception.DuplicateUserException;
 import com.xinyu.esportsticketing.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,5 +92,82 @@ class UserControllerTest {
                 .andExpect(jsonPath("$[0].email").value("leo_wang@example.com"))
                 .andExpect(jsonPath("$[0].passwordHash").doesNotExist())
                 .andExpect(jsonPath("$[0].createdAt").doesNotExist());
+    }
+
+    @Test
+    void shouldRegisterUserSuccessfully() throws Exception {
+
+        User user = new User();
+        user.setId(6);
+        user.setUsername("new_user");
+        user.setEmail("new@example.com");
+        user.setPasswordHash("secret-hash");
+
+        when(userService.register(
+                "new_user",
+                "new@example.com",
+                "Hello123!"
+        )).thenReturn(user);
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "new_user",
+                              "email": "new@example.com",
+                              "password": "Hello123!"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(6))
+                .andExpect(jsonPath("$.username").value("new_user"))
+                .andExpect(jsonPath("$.email").value("new@example.com"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnConflictWhenUsernameAlreadyExists() throws Exception {
+
+        when(userService.register(
+                "new_user",
+                "new@example.com",
+                "Hello123!"
+        )).thenThrow(
+                new DuplicateUserException("Username already exists")
+        );
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "new_user",
+                              "email": "new@example.com",
+                              "password": "Hello123!"
+                            }
+                            """))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnConflictWhenEmailAlreadyExists() throws Exception {
+
+        when(userService.register(
+                "new_user",
+                "new@example.com",
+                "Hello123!"
+        )).thenThrow(
+                new DuplicateUserException("Email already exists")
+        );
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                            {
+                              "username": "new_user",
+                              "email": "new@example.com",
+                              "password": "Hello123!"
+                            }
+                            """))
+                .andExpect(status().isConflict());
     }
 }
