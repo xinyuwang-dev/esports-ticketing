@@ -3,6 +3,7 @@ package com.xinyu.esportsticketing.controller;
 import com.xinyu.esportsticketing.entity.Order;
 import com.xinyu.esportsticketing.entity.TicketCategory;
 import com.xinyu.esportsticketing.entity.User;
+import com.xinyu.esportsticketing.service.OrderPlacementService;
 import com.xinyu.esportsticketing.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ class OrderControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
+    private OrderPlacementService orderPlacementService;
+
+    @MockitoBean
     private OrderService orderService;
 
     @Test
@@ -44,7 +48,7 @@ class OrderControllerTest {
         );
         order.setId(10);
 
-        when(orderService.createOrder(1, 3))
+        when(orderPlacementService.createOrder(1, 3))
                 .thenReturn(order);
 
         mockMvc.perform(post("/api/orders")
