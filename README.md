@@ -1,93 +1,238 @@
-# xinyu-dissertation
+# Esports Ticketing Prototype
 
+This repository contains an MSc engineering prototype for browsing esports
+events, registering users and purchasing tickets. It compares a MySQL-only
+order path with an optional Redis-assisted path under concurrent load. MySQL
+remains the authoritative source for orders and ticket inventory in both
+modes.
 
+## Features
 
-## Getting started
+- Browse events and their ticket categories in the web interface.
+- Register users and verify login passwords with BCrypt.
+- Create one-ticket orders and view a user's order history.
+- Calculate ticket prices from the category's current inventory level.
+- Protect MySQL inventory updates with a pessimistic write lock.
+- Optionally pre-filter purchase attempts with an atomic Redis Lua stock
+  decrement before the MySQL transaction.
+- Restore the Redis pre-decrement when MySQL order creation fails.
+- Run repeatable MySQL-versus-Redis concurrency experiments against real
+  infrastructure.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Technology stack
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Java 17
+- Spring Boot 4.1.0
+- Spring Web MVC, Spring Data JPA, Spring Data Redis and Bean Validation
+- MySQL 8
+- Redis 8.2, or a compatible Redis version
+- Maven Wrapper
+- HTML, CSS and JavaScript
 
-## Add your files
+## Requirements
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Install the following before running the project:
 
+- JDK 17
+- MySQL 8, including the `mysql` command-line client for the examples below
+- Redis 8.2 or a compatible version when using Redis mode or running the full
+  test suite
+- Docker Desktop if Redis will be run with the Docker commands below
+
+The repository includes `mvnw.cmd`, so Maven does not need to be installed
+separately. The commands below use Windows PowerShell and assume the current
+directory is the repository root.
+
+Check the Java and Maven Wrapper environment with:
+
+```powershell
+java -version
+.\mvnw.cmd -v
 ```
-cd existing_repo
-git remote add origin https://stgit.dcs.gla.ac.uk/msc-project-for-information-technology/2025/it-project-3075559w/xinyu-dissertation.git
-git branch -M main
-git push -uf origin main
+
+Both commands should report Java 17.
+
+## Database setup
+
+The application connects to the local database `esports_tickets` on MySQL's
+default port 3306. Set the database credentials for the current PowerShell
+process before starting the application:
+
+```powershell
+$env:DB_USERNAME = "replace_with_mysql_username"
+$env:DB_PASSWORD = "replace_with_mysql_password"
 ```
 
-## Integrate with your tools
+Create the database with the character set and collation used by the supplied
+dump:
 
-- [ ] [Set up project integrations](https://stgit.dcs.gla.ac.uk/msc-project-for-information-technology/2025/it-project-3075559w/xinyu-dissertation/-/settings/integrations)
+```powershell
+mysql -u $env:DB_USERNAME -p -e "CREATE DATABASE esports_tickets CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+```
 
-## Collaborate with your team
+Import the dump from the repository root:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```powershell
+cmd /c "mysql -u %DB_USERNAME% -p esports_tickets < esports_tickets.sql"
+```
 
-## Test and Deploy
+The client prompts for the MySQL password, so the password is not included in
+the command history.
 
-Use the built-in continuous integration in GitLab.
+> **Warning:** `esports_tickets.sql` contains `DROP TABLE IF EXISTS` statements.
+> Import it only into a new development database or a database whose contents
+> may be overwritten. The dump uses MySQL 8's `utf8mb4_0900_ai_ci` collation.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+The sample users in the SQL file contain `hashed_pwd_*` placeholder values.
+They are not BCrypt password hashes and cannot be used to log in. Start the
+application and create a login-capable user through the registration form or
+`POST /api/users/register`. The request examples in `demo.http` show the
+registration flow.
 
-***
+## Environment variables
 
-# Editing this README
+The application uses these variables:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+| Variable | Purpose | Example |
+|---|---|---|
+| `DB_USERNAME` | MySQL username | `replace_with_mysql_username` |
+| `DB_PASSWORD` | MySQL password | `replace_with_mysql_password` |
+| `APP_ORDER_MODE` | Selects `mysql` or `redis` order placement | `redis` |
 
-## Suggestions for a good README
+Set all three for the current PowerShell process with:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```powershell
+$env:DB_USERNAME = "replace_with_mysql_username"
+$env:DB_PASSWORD = "replace_with_mysql_password"
+$env:APP_ORDER_MODE = "redis"
+```
 
-## Name
-Choose a self-explaining name for your project.
+For IntelliJ IDEA, open **Run > Edit Configurations**, select the Spring Boot
+configuration and add the same names under **Environment variables**.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+`.env.example` is only a list of required variables. Standard Spring Boot does
+not automatically load `.env` or `.env.example`. Set the variables in the
+PowerShell process, the operating system environment or the IntelliJ Run
+Configuration before starting the application.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+If `APP_ORDER_MODE` is not set, the committed configuration currently defaults
+to `redis`.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Order placement modes
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### MySQL mode
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```powershell
+$env:APP_ORDER_MODE = "mysql"
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+`POST /api/orders` calls `OrderService` through `OrderPlacementService`.
+`OrderService` locks the selected ticket category with a pessimistic write
+lock, checks and decrements MySQL inventory, calculates the price and saves the
+order in one transaction. Redis stock operations and the Redis inventory
+initializer are bypassed. A Redis server is not required to start or purchase
+in this mode.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Redis mode
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```powershell
+$env:APP_ORDER_MODE = "redis"
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+At startup, `RedisInventoryInitializer` loads the current MySQL stock values
+into Redis. For an order request, `RedisOrderService` first executes a Lua
+script that atomically checks and decrements the Redis stock key. Requests that
+pass this pre-filter continue to `OrderService`, where MySQL pessimistic
+locking remains the final correctness protection. If MySQL order creation
+throws a runtime exception, the service attempts to restore the Redis stock.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Redis is an optional high-concurrency pre-filter, not the authoritative
+inventory database. Redis-mode startup and purchases may fail when Redis is
+unavailable; the prototype does not switch modes automatically.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Running Redis with Docker
 
-## License
-For open source projects, say how it is licensed.
+The committed Redis address is `localhost:16379`. The container exposes Redis
+port 6379 through host port 16379.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Create the container the first time:
+
+```powershell
+docker run -d --name esports-redis --restart unless-stopped -p 16379:6379 redis:8.2
+```
+
+Start an existing container and check it:
+
+```powershell
+docker start esports-redis
+docker exec esports-redis redis-cli PING
+```
+
+The health check should return `PONG`. The `--restart unless-stopped` option is
+set when the container is created and lets Docker restart it automatically.
+
+## Running the application
+
+After MySQL is running, the schema has been imported and the environment
+variables have been set, start the application with:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+In Redis mode, start Redis before the application. Open
+[http://localhost:8080](http://localhost:8080) to use the web interface.
+
+## Tests
+
+The tests use the real MySQL database configured by `application.properties`.
+Several integration and concurrency tests create, update and delete database
+rows. Run them only against a disposable development or test database, never
+against production or valuable data. An interrupted test can require manual
+cleanup.
+
+The complete test suite requires both MySQL and Redis at the configured
+addresses:
+
+```powershell
+.\mvnw.cmd test
+```
+
+MySQL mode for the running application does not require Redis, but the full
+test suite still contains Redis integration tests.
+
+## Concurrency comparison
+
+`OrderConcurrencyComparisonTest` compares the two service paths against real
+MySQL and Redis. Each scenario starts with stock 100 and submits 5000 purchase
+attempts through 100 worker threads. It performs one unreported warm-up for
+each mode, followed by six measured rounds. The execution order alternates so
+that each mode runs first three times.
+
+Run only this experiment with:
+
+```powershell
+.\mvnw.cmd -Dtest=OrderConcurrencyComparisonTest test
+```
+
+The test logs successes, sold-out rejections, unexpected failures, final
+stocks, order count, duration and throughput in CSV-compatible lines. It uses
+temporary database rows and Redis keys and attempts to remove them after each
+scenario. Run it only against a disposable database, and save dissertation
+results or screenshots outside the repository unless they are intentionally
+reviewed for submission.
+
+## Prototype limitations
+
+This is a single-instance MSc prototype, not a production ticketing platform.
+In particular:
+
+- Login verifies credentials but does not create a server-side session or
+  token. Order APIs trust the client-provided user ID and do not provide
+  production-level authorisation.
+- Redis mode has no automatic fallback, retry worker, reconciliation process,
+  reservation TTL or high-availability configuration.
+- The project does not provide idempotency tokens, a message queue or
+  distributed multi-instance coordination.
+- The Docker example runs one local Redis container and is intended for
+  development and repeatable experimentation.

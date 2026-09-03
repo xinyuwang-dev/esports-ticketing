@@ -35,3 +35,7 @@ build/
 http-client.private.env.json
 
 alltest.run/
+
+.env
+.env.*
+!.env.example

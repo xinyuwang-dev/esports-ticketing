@@ -17,25 +17,7 @@ Content-Type: application/json
   "finalAmount": 10
 }
 
-### Login with valid credentials
-POST http://localhost:8080/api/users/login
-Content-Type: application/json
-
-{
-  "username": "leo_wang",
-  "password": "{{demoPassword}}"
-}
-
-### Login with invalid password
-POST http://localhost:8080/api/users/login
-Content-Type: application/json
-
-{
-  "username": "leo_wang",
-  "password": "WrongPassword"
-}
-
-### Register a new user
+### Register this user before running the login requests below
 POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
@@ -45,13 +27,22 @@ Content-Type: application/json
   "password": "{{registerPassword}}"
 }
 
-### Login with newly registered user
+### Login with the account created by the registration request above
 POST http://localhost:8080/api/users/login
 Content-Type: application/json
 
 {
   "username": "register_demo",
   "password": "{{registerPassword}}"
+}
+
+### Login failure example; set demoPassword to a different value
+POST http://localhost:8080/api/users/login
+Content-Type: application/json
+
+{
+  "username": "register_demo",
+  "password": "{{demoPassword}}"
 }
 
 ### Get order history for user 1
