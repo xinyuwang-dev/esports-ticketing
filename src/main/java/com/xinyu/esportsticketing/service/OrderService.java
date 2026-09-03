@@ -20,7 +20,6 @@ public class OrderService {
     private final TicketCategoryRepository ticketCategoryRepository;
     private final DynamicPricingService dynamicPricingService;
 
-    // Constructor injection keeps dependencies explicit and easy to test.
     public OrderService(
             OrderRepository orderRepository,
             UserRepository userRepository,
@@ -40,7 +39,6 @@ public class OrderService {
     @Transactional
     public Order createOrder(Integer userId, Integer categoryId) {
 
-        // Load trusted domain data from the database instead of relying on client input.
         User user = userRepository.findById(userId)
                 .orElseThrow();
 
@@ -48,7 +46,6 @@ public class OrderService {
                 ticketCategoryRepository.findByIdForUpdate(categoryId)
                         .orElseThrow();
 
-        // Check that the selected ticket category still has available stock.
         if (ticketCategory.getAvailableStock() <= 0) {
             throw new IllegalStateException("Ticket is sold out");
         }
@@ -56,15 +53,14 @@ public class OrderService {
         BigDecimal finalAmount =
                 dynamicPricingService.calculatePrice(ticketCategory);
 
-        // One successful order currently represents one ticket purchase.
+        // Each order is for one ticket.
         ticketCategory.setAvailableStock(
                 ticketCategory.getAvailableStock() - 1
         );
 
         ticketCategoryRepository.save(ticketCategory);
 
-        // The server determines the order price from the ticket category.
-        // The client is not allowed to provide or override the final amount.
+        // Save the price calculated by the server, not a value from the request.
         Order order = new Order(
                 user,
                 ticketCategory,
@@ -72,7 +68,6 @@ public class OrderService {
                 Order.Status.PENDING
         );
 
-        // A newly created order starts as PENDING and is persisted to the database.
         return orderRepository.save(order);
     }
 }

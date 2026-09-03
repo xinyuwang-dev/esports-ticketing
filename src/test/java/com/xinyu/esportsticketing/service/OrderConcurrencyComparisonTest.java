@@ -95,7 +95,7 @@ class OrderConcurrencyComparisonTest {
 
             Integer userId = testUser.getId();
 
-            // Warm up both paths. These results are not reported.
+            // Warm-up runs are not included in the results.
             runScenario(
                     "mysql",
                     0,
@@ -430,7 +430,7 @@ class OrderConcurrencyComparisonTest {
                     successCount.get() / durationSeconds
             );
         } finally {
-            // Stop all workers before touching their database data.
+            // Wait for worker transactions to finish before deleting their test data.
             executorService.shutdownNow();
 
             boolean workersStopped;

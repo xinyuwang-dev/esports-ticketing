@@ -56,7 +56,6 @@ class OrderServiceTest {
         when(dynamicPricingService.calculatePrice(ticketCategory))
                 .thenReturn(new BigDecimal("120.00"));
 
-        // Return the same order passed into save(), simulating repository persistence.
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 

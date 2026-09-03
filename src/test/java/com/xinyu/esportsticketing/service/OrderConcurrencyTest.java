@@ -90,10 +90,9 @@ class OrderConcurrencyTest {
         executorService.submit(purchaseTask);
         executorService.submit(purchaseTask);
 
-        // Release both threads at nearly the same time.
+        // Release both workers together.
         startLatch.countDown();
 
-        // Wait until both purchase attempts have finished.
         finishLatch.await();
 
         executorService.shutdown();
@@ -170,10 +169,9 @@ class OrderConcurrencyTest {
 
         long startTime = System.nanoTime();
 
-        // Start all waiting purchase attempts.
+        // Release all workers together.
         startLatch.countDown();
 
-        // Wait until all 1000 requests have finished.
         finishLatch.await();
 
         long endTime = System.nanoTime();

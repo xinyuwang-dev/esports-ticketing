@@ -4,13 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-/**
- * User Entity - Maps to the 'user' table in the database.
- * '@Data' is a Lombok annotation that automatically generates Getters and Setters.
- */
 @Data
 @Entity
-@Table(name = "`user`") // Backticks are used because 'user' is a reserved word in MySQL
+@Table(name = "`user`") // user is reserved in MySQL.
 public class User {
 
     @Id

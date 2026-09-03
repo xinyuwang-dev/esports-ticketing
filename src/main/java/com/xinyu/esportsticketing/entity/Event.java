@@ -4,9 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-/**
- * Event Entity - Maps to the 'event' table.
- */
 @Data
 @Entity
 @Table(name = "event")

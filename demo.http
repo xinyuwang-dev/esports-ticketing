@@ -17,7 +17,7 @@ Content-Type: application/json
   "finalAmount": 10
 }
 
-### Register this user before running the login requests below
+### Register a test user
 POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
@@ -27,7 +27,7 @@ Content-Type: application/json
   "password": "{{registerPassword}}"
 }
 
-### Login with the account created by the registration request above
+### Login with the registered user
 POST http://localhost:8080/api/users/login
 Content-Type: application/json
 
@@ -36,7 +36,7 @@ Content-Type: application/json
   "password": "{{registerPassword}}"
 }
 
-### Login failure example; set demoPassword to a different value
+### Login with a different password (expected to fail)
 POST http://localhost:8080/api/users/login
 Content-Type: application/json
 
@@ -45,5 +45,5 @@ Content-Type: application/json
   "password": "{{demoPassword}}"
 }
 
-### Get order history for user 1
+### Get orders for user 1
 GET http://localhost:8080/api/orders/user/1

@@ -33,7 +33,6 @@ public class OrderResponse {
         this.categoryName = categoryName;
     }
 
-    // Convert the JPA entity into a clean API response.
     public static OrderResponse fromEntity(Order order) {
         return new OrderResponse(
                 order.getId(),

@@ -6,24 +6,22 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "`order`") // "order" is a reserved SQL keyword
+@Table(name = "`order`") // order is reserved in MySQL.
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // Many orders can belong to the same user
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    // Many orders can reference the same ticket category
     @ManyToOne
     @JoinColumn(name = "category_id")
     private TicketCategory ticketCategory;
 
-    // Actual amount charged for this order
+    // Price saved when the order is created.
     @Column(name = "final_amount")
     private BigDecimal finalAmount;
 

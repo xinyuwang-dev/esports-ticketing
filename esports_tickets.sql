@@ -160,8 +160,8 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
--- The hashed_pwd_* values below are schema demonstration placeholders, not BCrypt hashes.
--- These sample users cannot log in; use POST /api/users/register to create a login-capable user.
+-- These example passwords are placeholders, not BCrypt hashes.
+-- Register a new user through the API before trying to log in.
 INSERT INTO `user` VALUES (1,'leo_wang','hashed_pwd_123','leo_wang@example.com','2026-08-03 14:01:26'),(2,'admin_super','hashed_pwd_456','admin_super@example.com','2026-08-03 14:01:26'),(3,'faker_fan','hashed_pwd_789','faker_fan@example.com','2026-08-03 14:01:26'),(4,'theshy_01','hashed_pwd_abc','theshy_01@example.com','2026-08-03 14:01:26'),(5,'uzi_yyds','hashed_pwd_def','uzi_yyds@example.com','2026-08-03 14:01:26');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
