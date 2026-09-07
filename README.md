@@ -111,6 +111,52 @@ MySQL stores the final stock and order data in both modes. If MySQL order
 creation fails in `redis` mode, the service tries to restore the Redis stock.
 Redis failures do not cause an automatic switch to `mysql` mode.
 
+## Quick evaluation
+
+Use the setup steps above with your own MySQL username and password. The
+project does not require access to the author's database account.
+
+A newly created `esports_tickets` database is empty until
+`esports_tickets.sql` is imported. The dump adds a sample event with Standard
+and VIP ticket categories. Its placeholder users cannot log in.
+
+For a short demonstration:
+
+1. Complete the database creation and import steps above.
+2. Set your own `DB_USERNAME` and `DB_PASSWORD`, and use
+   `APP_ORDER_MODE=mysql` for the basic demonstration.
+3. Start the application with the command in the setup section.
+4. Open [http://localhost:8080](http://localhost:8080) and register a new
+   account.
+5. Log in, view the event's ticket categories, buy one ticket, and select
+   **Load My Orders**.
+
+Redis does not need to be running in `mysql` mode. Use `redis` mode when
+demonstrating Redis stock pre-decrement or the concurrency comparison.
+
+## Resetting demo data
+
+Purchases made through the web page create real MySQL orders and reduce the
+available ticket stock.
+
+To restore stock without removing users or orders, stop the application and
+run this statement against the demonstration database:
+
+```sql
+UPDATE ticket_category
+SET available_stock = initial_stock;
+```
+
+If the demonstration used `redis` mode, restart the application after updating
+MySQL. The startup initializer will then reload the Redis stock values.
+
+To clear accounts and orders and restore all seeded data, import
+`esports_tickets.sql` again using the setup instructions above.
+
+> **Warning:** The SQL file contains `DROP TABLE IF EXISTS` and deletes existing
+> data. Re-import it only into a demonstration or test database that may be
+> reset.
+
 ## Tests
 
 The tests connect to the MySQL and Redis addresses in the project
