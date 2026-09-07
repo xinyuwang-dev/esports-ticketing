@@ -1,0 +1,181 @@
+# Software Prerequisites and Run Guide
+
+This guide describes the environment required to build, run, test, and
+demonstrate the submitted e-sports ticketing prototype. It does not require the
+author's MySQL account or any private credential.
+
+## Required software
+
+- JDK 17. Confirm with `java -version` before building.
+- The repository's Maven Wrapper. A separate Maven installation is not needed.
+  The wrapper is configured to download Apache Maven 3.9.16.
+- MySQL 8, normally listening on localhost port 3306.
+- A MySQL command-line client for creating and importing the database.
+- Redis 8.2, or a compatible Redis version, for redis mode and the full test
+  suite. The project connects to Redis at localhost port 16379.
+- A current web browser for the interface at http://localhost:8080.
+- Docker Desktop is optional but provides the documented Redis setup.
+
+The first Maven Wrapper build requires network access to download the Maven
+distribution and any dependencies not already present in the local Maven
+cache. Later builds can reuse the cache when all required artifacts are
+available.
+
+## Database creation and import
+
+Run these commands from the repository root with your own MySQL username. The
+project does not require access to the author's database account.
+
+Open the MySQL client:
+
+```text
+mysql -u your_mysql_username -p
+```
+
+Create the database in the MySQL client:
+
+```text
+CREATE DATABASE esports_tickets
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_0900_ai_ci;
+```
+
+Leave the client with `exit`. In Windows PowerShell, import the dump through
+cmd.exe because input redirection is handled differently by PowerShell:
+
+```text
+cmd /c "mysql -u your_mysql_username -p esports_tickets < esports_tickets.sql"
+```
+
+On Linux or macOS, use:
+
+```text
+mysql -u your_mysql_username -p esports_tickets < esports_tickets.sql
+```
+
+Warning: esports_tickets.sql contains DROP TABLE IF EXISTS. Import it only into
+a new or replaceable development or test database. The sample password values
+are placeholders rather than BCrypt hashes, so create a user through the
+registration page or API before testing login.
+
+## Environment variables
+
+The application reads these variables:
+
+- DB_USERNAME: your MySQL username.
+- DB_PASSWORD: your MySQL password.
+- APP_ORDER_MODE: either mysql or redis.
+
+The committed application.properties selects redis by default. Setting
+APP_ORDER_MODE in the launch environment overrides that value.
+
+The committed .env.example file is only a list of variable names. Spring Boot
+does not automatically load .env or .env.example. Set the variables in the
+current shell, the operating system, or an IntelliJ Run Configuration.
+
+Windows PowerShell example:
+
+```text
+$env:DB_USERNAME = "your_mysql_username"
+$env:DB_PASSWORD = Read-Host "MySQL password"
+$env:APP_ORDER_MODE = "mysql"
+```
+
+Linux or macOS shell example:
+
+```text
+export DB_USERNAME="your_mysql_username"
+export DB_PASSWORD="your_mysql_password"
+export APP_ORDER_MODE="mysql"
+```
+
+## Order modes and Redis
+
+- APP_ORDER_MODE=mysql sends order creation directly to the MySQL transaction.
+  OrderService locks the ticket-category row pessimistically, updates MySQL
+  stock, and stores the order. Redis is not required to start or purchase.
+- APP_ORDER_MODE=redis first performs the atomic Redis Lua stock reservation.
+  Accepted requests still execute the same MySQL pessimistic-locking transaction
+  and store the final stock and order in MySQL. Redis must be available.
+
+Redis is a pre-filter, not the persistent inventory authority. Redis mode has a
+limited compensating increment when MySQL order creation throws a runtime
+exception. It has no automatic fallback, compensation retry, or stock
+reconciliation.
+
+To create the documented Redis 8.2 container once:
+
+```text
+docker run -d --name esports-redis --restart unless-stopped -p 16379:6379 redis:8.2
+```
+
+For an existing container, use:
+
+```text
+docker start esports-redis
+docker exec esports-redis redis-cli PING
+```
+
+The PING command should return PONG. Do not run the create command repeatedly
+for an existing container with the same name.
+
+## Start the application
+
+After importing the database and setting the environment variables, use the
+command for the current operating system.
+
+Windows PowerShell:
+
+```text
+.\mvnw.cmd spring-boot:run
+```
+
+Linux or macOS:
+
+```text
+./mvnw spring-boot:run
+```
+
+The application uses the default Spring Boot HTTP port 8080. Open:
+
+http://localhost:8080
+
+## Tests
+
+The tests use the MySQL and Redis addresses in the project configuration. Some
+tests create, update, and delete real rows and Redis keys. Run them only against
+a development or test database that may be modified. The full test suite needs
+both MySQL and Redis, even though mysql application mode does not require Redis.
+
+Windows PowerShell:
+
+```text
+.\mvnw.cmd test
+.\mvnw.cmd "-Dtest=OrderConcurrencyComparisonTest" test
+```
+
+Linux or macOS:
+
+```text
+./mvnw test
+./mvnw -Dtest=OrderConcurrencyComparisonTest test
+```
+
+The comparison test uses real MySQL and Redis. Each scenario uses 100 initial
+tickets, 5,000 purchase attempts, 100 worker threads, and a fixed Hikari pool.
+It creates temporary data, reports outcomes and timings to test output, and
+attempts to remove that data after workers stop.
+
+## Browser demonstration
+
+1. Create and import the esports_tickets database.
+2. Set DB_USERNAME and DB_PASSWORD for your own MySQL account.
+3. Set APP_ORDER_MODE=mysql for the simplest demonstration; Redis is then not
+   required.
+4. Start the application and open http://localhost:8080.
+5. Register a new user because the SQL placeholder users cannot log in.
+6. Log in, load the sample event, view its ticket categories, and buy one ticket.
+7. Select Load My Orders to display the newly created order.
+
+Use APP_ORDER_MODE=redis and start Redis only when demonstrating the Redis Lua
+reservation path or running the full concurrency comparison.

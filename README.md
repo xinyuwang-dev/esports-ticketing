@@ -180,6 +180,13 @@ tickets and sends 5000 requests through 100 worker threads. There is one
 warm-up per mode followed by six measured runs with alternating order. Results
 are printed to the test output and are not stored in the repository.
 
+## Submission documentation
+
+- [`CodeList.txt`](CodeList.txt) records the significant student-written and
+  AI-assisted project files.
+- [`SoftwarePrereqs.txt`](SoftwarePrereqs.txt) provides the software
+  prerequisites and concise setup and run instructions.
+
 ## Limitations
 
 - Login checks a password but does not create a session or token. Order APIs

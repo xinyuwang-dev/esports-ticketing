@@ -1,0 +1,307 @@
+# Code Contribution List
+
+Project: Design and Implementation of a High-Concurrency E-Sports Ticketing System
+
+This list records the main project files and material AI assistance. The
+classification is based on the current source, Git history, line-level blame,
+and the development record. "Predominantly student-written" does not mean that
+no AI advice was used; it means that the student's incremental implementation
+is the main contribution and no material AI rewrite is confirmed for most of
+the file. Earlier OpenAI ChatGPT guidance and debugging were not always recorded
+at line level, so no claim of exclusive student authorship is made.
+
+AI tools used
+
+- OpenAI ChatGPT
+- OpenAI Codex
+
+## 1. Predominantly student-written
+
+### Domain model, persistence, and seed data
+
+Files:
+
+- src/main/java/com/xinyu/esportsticketing/entity/User.java
+- src/main/java/com/xinyu/esportsticketing/entity/Event.java
+- src/main/java/com/xinyu/esportsticketing/entity/TicketCategory.java
+- src/main/java/com/xinyu/esportsticketing/entity/Order.java
+- src/main/java/com/xinyu/esportsticketing/repository/UserRepository.java
+- src/main/java/com/xinyu/esportsticketing/repository/EventRepository.java
+- src/main/java/com/xinyu/esportsticketing/repository/TicketCategoryRepository.java
+- src/main/java/com/xinyu/esportsticketing/repository/OrderRepository.java
+- src/main/java/com/xinyu/esportsticketing/exception/DuplicateUserException.java
+- esports_tickets.sql
+
+Student contribution: designed and incrementally implemented the core entities,
+relationships, repository queries, relational schema, and sample development
+data.
+
+AI assistance: OpenAI Codex later simplified comments in the four entity files
+and the explanatory placeholder-password comment in esports_tickets.sql. Those
+comment edits did not create the schema, entities, seed records, or repository
+behaviour.
+
+Evidence: the model and persistence work appears incrementally in commits
+1910e4a, 891a5d7, 8989a2d, 1ba8790, 2427074, c5125ac, 46eb875, 0c861c9,
+and f2c4f60. The later comment-only changes appear in b23b132.
+
+### Baseline services and their focused tests
+
+Files:
+
+- src/main/java/com/xinyu/esportsticketing/service/EventService.java
+- src/main/java/com/xinyu/esportsticketing/service/TicketCategoryService.java
+- src/main/java/com/xinyu/esportsticketing/service/UserService.java
+- src/main/java/com/xinyu/esportsticketing/service/OrderService.java
+- src/main/java/com/xinyu/esportsticketing/service/DynamicPricingService.java
+- src/test/java/com/xinyu/esportsticketing/service/EventServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/TicketCategoryServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/UserServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/OrderServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/DynamicPricingServiceTest.java
+
+Student contribution: implemented the basic event, category, user, login, order,
+and pricing behaviour; integrated BCrypt; and developed the MySQL transaction
+and pessimistic-locking baseline. DynamicPricingService implements deterministic
+stock-based pricing from remaining-stock thresholds, not demand forecasting or
+a supply-and-demand optimisation model.
+
+AI assistance: earlier OpenAI ChatGPT advice and debugging may have informed
+parts of this work, but the repository does not identify exact lines. OpenAI
+Codex made small comment-only edits to OrderService and OrderServiceTest in
+b23b132. The classification still acknowledges the recorded AI assistance.
+
+Evidence: relevant incremental commits include 1643807, 3de36f8, 0fba6c2,
+84fd269, 02d6024, 1216a96, cf7352e, f42da9c, d4c459b, c1d8899, 2574ad6,
+and b23b132.
+
+### Controllers, DTOs, and baseline web tests
+
+Files:
+
+- src/main/java/com/xinyu/esportsticketing/controller/EventController.java
+- src/main/java/com/xinyu/esportsticketing/controller/TicketCategoryController.java
+- src/main/java/com/xinyu/esportsticketing/controller/UserController.java
+- src/main/java/com/xinyu/esportsticketing/controller/OrderController.java
+- src/main/java/com/xinyu/esportsticketing/dto/CreateOrderRequest.java
+- src/main/java/com/xinyu/esportsticketing/dto/LoginRequest.java
+- src/main/java/com/xinyu/esportsticketing/dto/LoginResponse.java
+- src/main/java/com/xinyu/esportsticketing/dto/OrderResponse.java
+- src/main/java/com/xinyu/esportsticketing/dto/RegisterRequest.java
+- src/main/java/com/xinyu/esportsticketing/dto/TicketCategoryResponse.java
+- src/main/java/com/xinyu/esportsticketing/dto/UserResponse.java
+- src/test/java/com/xinyu/esportsticketing/controller/EventControllerTest.java
+- src/test/java/com/xinyu/esportsticketing/controller/TicketCategoryControllerTest.java
+- src/test/java/com/xinyu/esportsticketing/controller/UserControllerTest.java
+- src/test/java/com/xinyu/esportsticketing/controller/OrderControllerTest.java
+
+Student contribution: implemented the API endpoints, request and response
+structures, validation, and the initial MockMvc coverage.
+
+AI assistance: OpenAI Codex made a localised change in commit 61f9b3c so the
+POST order endpoint calls OrderPlacementService, while order history continues
+to call OrderService. The same commit changed the POST test mock from
+OrderService to OrderPlacementService. Git blame attributes 9 current lines of
+OrderController and 6 current lines of OrderControllerTest to this routing
+change; the files otherwise retain their earlier controller and test work.
+OpenAI Codex also simplified one OrderResponse comment in b23b132.
+
+Evidence: controller and DTO history includes 3c9abfa, fd763ce, d1bee81,
+dde48c5, d4c459b, c1d8899, 2574ad6, 967ac67, 61f9b3c, and b23b132.
+
+### Repository tests and manual API examples
+
+Files:
+
+- src/test/java/com/xinyu/esportsticketing/repository/EventRepositoryTest.java
+- src/test/java/com/xinyu/esportsticketing/repository/TicketCategoryRepositoryTest.java
+- src/test/java/com/xinyu/esportsticketing/repository/OrderRepositoryTest.java
+- demo.http
+
+Student contribution: implemented database integration checks and the original
+manual API requests.
+
+AI assistance: OpenAI Codex later clarified instructions in demo.http, including
+the requirement to register before login. The endpoints and request examples
+predate that documentation edit.
+
+Evidence: c5125ac, 46eb875, 0c861c9, e34ff29, 8854d3c, c7b7389, and b23b132.
+
+## 2. Significantly AI-assisted
+
+### Existing MySQL concurrency test extended for evaluation
+
+File:
+
+- src/test/java/com/xinyu/esportsticketing/service/OrderConcurrencyTest.java
+
+Student contribution: created and integrated the original MySQL locking and
+concurrency tests, selected the required behaviour, and verified the final test
+against the development database.
+
+AI assistance: OpenAI ChatGPT and OpenAI Codex assisted with evaluation setup,
+debugging, cleanup, workload expansion, timing, reporting, and later comment
+simplification. Commit f26f937 changed the high-concurrency case to 100 initial
+tickets, 5,000 purchase attempts, and 100 worker threads and added duration and
+throughput reporting. The file remains based on earlier work in commits
+02d6024, 3fa8d10, and 5438fc6.
+
+### Runtime and test configuration
+
+Files and scopes:
+
+- pom.xml: the Spring Data Redis dependency block added in f26f937 is
+  AI-assisted; the rest is primarily Spring Initializr and existing project
+  configuration.
+- src/main/resources/application.properties: Redis connection settings and
+  app.order.mode configuration were materially developed with OpenAI ChatGPT
+  and OpenAI Codex in f26f937, 7dc6a8a, and b23b132.
+- .gitignore: OpenAI Codex added the environment-file protection rules in
+  c7b7389; the remainder predates that change.
+
+Student contribution: selected the local architecture, ports, runtime mode,
+and environment-variable approach and verified the resulting application and
+test setup.
+
+### Windows Maven Wrapper fix
+
+File and scope:
+
+- mvnw.cmd: only the Windows .m2 Target handling block is classified here.
+
+Student contribution: reproduced the failure, supplied the installed Java and
+Maven environment, and verified the repaired wrapper.
+
+AI assistance: OpenAI Codex diagnosed and implemented the local three-line
+functional change in commit 1227915. The patch caches Get-Item and handles both
+a null Target and an empty Target collection. The remaining wrapper script is
+standard generated Maven Wrapper code and is not claimed as student- or
+AI-authored project logic.
+
+## 3. Predominantly AI-assisted
+
+### Redis inventory and order services
+
+Files:
+
+- src/main/java/com/xinyu/esportsticketing/service/RedisStockService.java
+- src/main/java/com/xinyu/esportsticketing/service/RedisOrderService.java
+- src/main/java/com/xinyu/esportsticketing/service/RedisInventoryInitializer.java
+
+Student contribution: defined Redis as an optional pre-filter, retained MySQL
+as the authoritative persistent store, selected and integrated the final
+behaviour, and verified the application and happy path.
+
+AI assistance: OpenAI ChatGPT and OpenAI Codex substantially assisted with the
+Lua stock check and decrement, Redis key operations, delegation to the MySQL
+OrderService, limited compensation after a runtime failure, and conditional
+startup initialisation. Git blame attributes all current lines of
+RedisStockService and RedisOrderService to f26f937 and all current lines of
+RedisInventoryInitializer to 7dc6a8a.
+
+Actual behaviour: mysql mode calls the MySQL OrderService directly. Redis mode
+performs the Lua reservation first, then calls the same MySQL transaction. Both
+modes persist final stock and orders in MySQL, whose pessimistic lock remains
+the final correctness protection. Compensation is a limited Redis increment;
+there is no automatic fallback, retry, or reconciliation. The initializer is
+created only when app.order.mode is redis.
+
+### Order mode routing
+
+Files:
+
+- src/main/java/com/xinyu/esportsticketing/service/OrderPlacementService.java
+- src/test/java/com/xinyu/esportsticketing/service/OrderPlacementServiceTest.java
+
+Student contribution: specified the two supported modes, rejected a larger
+strategy hierarchy, integrated the service, and verified the final tests.
+
+AI assistance: OpenAI Codex drafted both complete files in commit 0910d39.
+Git blame attributes all 37 lines of the service and all 85 lines of its test to
+that commit. Tests cover mysql routing, redis routing, and invalid-mode failure.
+
+### Redis and application-context tests
+
+Files:
+
+- src/test/java/com/xinyu/esportsticketing/RedisConnectionTest.java
+- src/test/java/com/xinyu/esportsticketing/EsportsTicketingApplicationTests.java
+- src/test/java/com/xinyu/esportsticketing/service/RedisStockServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/RedisOrderServiceTest.java
+- src/test/java/com/xinyu/esportsticketing/service/RedisOrderConcurrencyTest.java
+
+Student contribution: selected the required cases, supplied the real local
+services, reviewed results, and accepted the final test behaviour.
+
+AI assistance: OpenAI ChatGPT and OpenAI Codex substantially assisted with the
+Redis test scaffolding, sold-out and non-negative stock assertions, successful
+delegation, compensation verification, concurrent execution, and the context
+test proving that RedisInventoryInitializer is absent in mysql mode. The Redis
+test files were introduced in f26f937; the context test was materially expanded
+in 7dc6a8a.
+
+### Repeatable MySQL and Redis comparison
+
+Files:
+
+- src/test/java/com/xinyu/esportsticketing/service/OrderConcurrencyComparisonTest.java
+- src/test/resources/application-concurrency.properties
+
+Student contribution: defined the comparison objective and constraints,
+selected the final experiment configuration, ran the experiment, reviewed the
+results, and retained responsibility for the reported data.
+
+AI assistance: OpenAI Codex drafted the comparison test and configuration in
+46787db and later simplified comments in b23b132. Git blame attributes 537 of
+539 current test lines to 46787db. The test uses 100 initial tickets, 5,000
+purchase attempts, 100 worker threads, and a fixed Hikari pool. It records
+successful orders, sold-out rejections, unexpected failures, final stock,
+orders, duration, and throughput, with bounded waits and test-data cleanup.
+The expected correctness result is 100 successful orders and 4,900 sold-out
+rejections.
+
+### Web interface polish
+
+File:
+
+- src/main/resources/static/index.html
+
+Student contribution: implemented and integrated the earlier registration,
+login, event, ticket, purchase, and order-history functions; specified the
+polish requirements; manually checked all retained functions; and accepted the
+final page.
+
+AI assistance: OpenAI Codex substantially rewrote presentation and page
+structure in commit 68d468d. Git records 583 insertions and 74 deletions, and
+current blame attributes 583 lines to that commit. The rewrite supplied the
+responsive dark interface, cards, messages, focus styling, mobile layout, and
+page rendering while retaining the existing API requests and business flow.
+
+### Project documentation and environment template
+
+Files:
+
+- README.md
+- .env.example
+- CodeList.txt
+- SoftwarePrereqs.txt
+
+Student contribution: supplied project facts, scope decisions, tested commands,
+evaluation requirements, and corrections; reviewed and accepted the content
+used for submission.
+
+AI assistance: OpenAI Codex rewrote and simplified README.md in c7b7389 and
+b23b132, then added evaluation and data-reset guidance in af284b5. Git blame
+attributes 171 current README lines to those three commits. OpenAI Codex created
+.env.example in c7b7389 and drafted CodeList.txt and SoftwarePrereqs.txt during
+the final documentation check. The student remains responsible for confirming
+that these documents match the submitted system and dissertation.
+
+## Responsibility statement
+
+The student has checked and accepted the content included in the final
+submission and remains responsible for its accuracy, operation, academic
+integrity, and compliance with University requirements. The classifications
+above focus on important files and material AI assistance. Standard framework
+boilerplate, generated Maven Wrapper content, and third-party libraries that
+were not materially modified are not listed line by line.
