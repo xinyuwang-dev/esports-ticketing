@@ -180,6 +180,47 @@ tickets and sends 5000 requests through 100 worker threads. There is one
 warm-up per mode followed by six measured runs with alternating order. Results
 are printed to the test output and are not stored in the repository.
 
+## Read-only ticket assistant
+
+From the repository root, create `.venv` if needed and install the Python dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r ticket_assistant/requirements.txt
+```
+
+With the ticket service running, use the plain Python entry point to query event ID `1`.
+The default service URL is `http://localhost:8080`; set `TICKET_SERVICE_BASE_URL`
+only if the service uses a different address (for example, `http://localhost:18080`).
+
+```powershell
+.\.venv\Scripts\python.exe -B -m ticket_assistant
+```
+
+The Agent CLI prints the final answer to stdout; add `--show-tools` for tool records
+and results on stderr. Prices and stock are snapshots from the time of the query.
+Both providers use the same read-only tool, with tracing disabled.
+
+```powershell
+# OpenAI (default): set OPENAI_API_KEY in the local shell before running.
+.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli "请查询赛事 ID 1 的票种、当前报价和余票"
+
+# Gemini: set GEMINI_API_KEY in the local shell before running.
+.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli --provider gemini --show-tools "请查询赛事 ID 1 的票种、当前报价和余票"
+
+# Offline tests
+.\.venv\Scripts\python.exe -B -m unittest discover -s ticket_assistant/tests -v
+```
+
+The Gemini option uses `gemini-3.1-flash-lite` through Google's OpenAI-compatible
+Chat Completions endpoint. For a free-tier run, use a key from a confirmed free-tier
+project; the CLI cannot verify the project's billing status. Never put API keys in
+source files or command examples. Set `$env:TICKET_SERVICE_BASE_URL = 'http://localhost:18080'`
+in PowerShell if the ticket backend is listening on port `18080`.
+
+The offline tests use a simulated model and ticket backend, with tracing disabled.
+They do not require a running service or an API key.
+
 ## Submission documentation
 
 - [`CodeList.txt`](CodeList.txt) records the significant student-written and

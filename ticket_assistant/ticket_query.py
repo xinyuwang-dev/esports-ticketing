@@ -1,3 +1,5 @@
+import os
+
 import requests
 
 
@@ -23,7 +25,13 @@ def _validate_category(category: object, record_number: int) -> dict:
 
 def fetch_categories(url: str) -> dict:
     """Fetch the ticket-category list from the given endpoint."""
-    response = requests.get(url, timeout=5)
+    try:
+        response = requests.get(url, timeout=5)
+    except requests.exceptions.Timeout:
+        return {"ok": False, "error": "ticket service request timed out"}
+    except requests.exceptions.ConnectionError:
+        return {"ok": False, "error": "cannot connect to ticket service"}
+
     if response.status_code != 200:
         return {
             "ok": False,
@@ -31,7 +39,11 @@ def fetch_categories(url: str) -> dict:
             "http_status": response.status_code,
         }
 
-    categories = response.json()
+    try:
+        categories = response.json()
+    except requests.exceptions.JSONDecodeError:
+        return {"ok": False, "error": "ticket service returned invalid JSON"}
+
     if not isinstance(categories, list):
         return {
             "ok": False,
@@ -48,3 +60,13 @@ def fetch_categories(url: str) -> dict:
         "categories": categories,
         "count": len(categories),
     }
+
+
+def query_ticket_categories(event_id: int) -> dict:
+    """Query ticket categories for a positive integer event ID."""
+    if type(event_id) is not int or event_id <= 0:
+        return {"ok": False, "error": "event_id must be a positive integer"}
+
+    base_url = os.getenv("TICKET_SERVICE_BASE_URL", "http://localhost:8080").rstrip("/")
+    url = f"{base_url}/api/events/{event_id}/ticket-categories"
+    return fetch_categories(url)

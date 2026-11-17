@@ -1,9 +1,8 @@
-from .ticket_query import fetch_categories
+from .ticket_query import query_ticket_categories
 
 
 def main() -> None:
-    url = "http://localhost:8080/api/events/1/ticket-categories"
-    print(fetch_categories(url))
+    print(query_ticket_categories(1))
 
 
 if __name__ == "__main__":
