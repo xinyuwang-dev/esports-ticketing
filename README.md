@@ -197,16 +197,40 @@ only if the service uses a different address (for example, `http://localhost:180
 .\.venv\Scripts\python.exe -B -m ticket_assistant
 ```
 
+The plain entry point and `query_ticket_categories(event_id)` still return all
+categories, including zero stock. Use `filter_ticket_categories` for an inclusive
+stock and current-price filter:
+
+```python
+from ticket_assistant.ticket_query import filter_ticket_categories
+
+result = filter_ticket_categories(1, min_stock=2, max_price=100)
+print(result)
+```
+
+`event_id` and `min_stock` must be positive integers, excluding booleans.
+Filtering defaults to `min_stock=1`; an omitted or `None` budget has no price
+limit. A provided budget must be a finite, non-negative integer or float,
+excluding booleans and strings. Invalid parameters return an error before HTTP.
+Malformed backend records also return an error, including the record number and
+field when applicable. The filter uses `currentPrice` from the backend and keeps
+all fields of each match.
+
 The Agent CLI prints the final answer to stdout; add `--show-tools` for tool records
 and results on stderr. Prices and stock are snapshots from the time of the query.
 Both providers use the same read-only tool, with tracing disabled.
+The Agent responds in English by default and preserves event and category names
+as returned by the backend.
 
 ```powershell
 # OpenAI (default): set OPENAI_API_KEY in the local shell before running.
-.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli "请查询赛事 ID 1 的票种、当前报价和余票"
+.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli "Please list the ticket categories, current prices and available stock for event ID 1."
 
 # Gemini: set GEMINI_API_KEY in the local shell before running.
-.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli --provider gemini --show-tools "请查询赛事 ID 1 的票种、当前报价和余票"
+.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli --provider gemini --show-tools "Please list the ticket categories, current prices and available stock for event ID 1."
+
+# Filtered Agent query (also sends model API requests)
+.\.venv\Scripts\python.exe -B -m ticket_assistant.agent_cli --provider gemini --show-tools "Find ticket categories for event 1 with a current price at most 100 and at least 2 tickets available."
 
 # Offline tests
 .\.venv\Scripts\python.exe -B -m unittest discover -s ticket_assistant/tests -v
@@ -220,6 +244,24 @@ in PowerShell if the ticket backend is listening on port `18080`.
 
 The offline tests use a simulated model and ticket backend, with tracing disabled.
 They do not require a running service or an API key.
+
+The single Agent tool accepts `event_id`, nullable `min_stock` and nullable
+`max_price`. With both filters omitted or null it queries all categories; with a
+stock minimum or budget it filters, defaulting the minimum to 1 for a budget-only
+query. Successful tool results include `event_id`, `filters`, `source_count`,
+`count` and `categories`. `source_count` is the original list size and `count` is
+the returned list size. The plain Python query keeps its original `count` meaning
+and response shape. `--show-tools` pairs actual arguments and results by `call_id`.
+
+An empty source list cannot distinguish a missing event from an event without
+categories. A non-empty source with no matches is a successful filtered query.
+Failures return `ok=False`; SDK parameter rejection produces its own tool error
+before the query function runs. A query reserves no stock. The purchase flow
+rechecks stock and calculates the final price. The DTO has no currency field;
+the assistant uses its numeric price units without adding a currency symbol.
+
+See [the filtering learning guide](ticket_assistant/FILTERING_GUIDE.md) for the
+call chain, a fixed offline example and a small exercise.
 
 ## Submission documentation
 

@@ -6,7 +6,7 @@ import socket
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import httpx2
 from agents import Model, ModelResponse, RunConfig, Runner, Usage
@@ -21,8 +21,9 @@ QUESTION = "Please look up the ticket categories, current prices and stock for e
 
 
 class ScriptedModel(Model):
-    def __init__(self, final_text: str):
+    def __init__(self, final_text: str, arguments: dict | None = None):
         self.final_text = final_text
+        self.arguments = {"event_id": 1} if arguments is None else arguments
         self.inputs = []
         self.tool_names = []
 
@@ -34,7 +35,7 @@ class ScriptedModel(Model):
         if len(self.inputs) == 1:
             item = ResponseFunctionToolCall(
                 type="function_call", name="query_ticket_categories", call_id="offline-ticket",
-                arguments='{"event_id": 1}',
+                arguments=json.dumps(self.arguments),
             )
         elif len(self.inputs) == 2:
             item = ResponseOutputMessage(
@@ -52,6 +53,9 @@ class ScriptedModel(Model):
 class AgentRunnerTests(unittest.IsolatedAsyncioTestCase):
     async def check_tool_round_trip(self, tool_result: dict, scripted_answer: str):
         model = ScriptedModel(scripted_answer)
+        expected_result = {**tool_result, "event_id": 1, "filters": None}
+        if tool_result["ok"]:
+            expected_result["source_count"] = tool_result["count"]
         blocked = AssertionError("No network calls are allowed in the offline Runner test")
         with (patch.object(ticket_query, "query_ticket_categories", return_value=tool_result) as query,
               patch.object(socket.socket, "connect", side_effect=blocked),
@@ -73,7 +77,7 @@ class AgentRunnerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(calls[0]["arguments"]), {"event_id": 1})
         self.assertEqual(calls[0]["call_id"], outputs[0]["call_id"])
         # This SDK version converts ordinary dictionary results to Python text for replay.
-        self.assertEqual(ast.literal_eval(outputs[0]["output"]), tool_result)
+        self.assertEqual(ast.literal_eval(outputs[0]["output"]), expected_result)
         self.assertEqual(result.final_output, scripted_answer)
 
         for show_tools in (False, True):
@@ -89,7 +93,7 @@ class AgentRunnerTests(unittest.IsolatedAsyncioTestCase):
             if show_tools:
                 self.assertEqual(json.loads(stderr.getvalue()), [{
                     "tool": "query_ticket_categories", "call_id": outputs[0]["call_id"],
-                    "arguments": {"event_id": 1}, "result": tool_result,
+                    "arguments": {"event_id": 1}, "result": expected_result,
                 }])
             else:
                 self.assertEqual(stderr.getvalue(), "")
@@ -150,12 +154,30 @@ class AgentCliTests(unittest.TestCase):
         self.assertIn("GEMINI_API_KEY is not configured", stderr.getvalue())
 
     def test_gemini_cli_replays_tool_result_and_thought_signature(self):
-        expected_result = {
+        source_result = {
             "ok": True,
             "categories": [{"id": 4, "categoryName": "VIP", "currentPrice": 360.0, "availableStock": 0}],
             "count": 1,
         }
-        answer = "VIP: current price 360.0; available stock 0 at query time."
+        expected_result = {**source_result, "event_id": 1, "filters": None, "source_count": 1}
+        self.check_gemini_cli_replay(
+            {"event_id": 1}, "query_ticket_categories", source_result, expected_result, call(1),
+        )
+
+    def test_gemini_cli_replays_filter_parameters_and_full_results(self):
+        arguments = {"event_id": 1, "min_stock": 2, "max_price": 100}
+        expected_result = {
+            "ok": True, "event_id": 1, "filters": {"min_stock": 2, "max_price": 100},
+            "source_count": 2, "count": 1,
+            "categories": [{"id": 3, "categoryName": "Standard", "currentPrice": 100, "availableStock": 2}],
+        }
+        self.check_gemini_cli_replay(
+            arguments, "filter_ticket_categories", expected_result, expected_result,
+            call(1, min_stock=2, max_price=100),
+        )
+
+    def check_gemini_cli_replay(self, arguments, query_name, query_result, expected_result, expected_call):
+        answer = "Preset Gemini answer."
         signature = "mock-gemini-thought-signature"
         call_id = "call_gemini_offline"
         requests_seen = []
@@ -170,7 +192,7 @@ class AgentCliTests(unittest.TestCase):
                 message = {"role": "assistant", "content": None, "tool_calls": [{
                     "id": call_id,
                     "type": "function",
-                    "function": {"name": "query_ticket_categories", "arguments": '{"event_id": 1}'},
+                    "function": {"name": "query_ticket_categories", "arguments": json.dumps(arguments)},
                     "extra_content": {"google": {"thought_signature": signature}},
                 }]}
                 finish_reason = "tool_calls"
@@ -193,14 +215,15 @@ class AgentCliTests(unittest.TestCase):
         stdout, stderr = StringIO(), StringIO()
         with (patch.dict(os.environ, {"GEMINI_API_KEY": "offline-test-placeholder", "OPENAI_API_KEY": ""}),
               patch.object(agent_cli, "AsyncOpenAI", side_effect=mock_client) as client,
-              patch.object(ticket_query, "query_ticket_categories", return_value=expected_result) as query,
+              patch.object(ticket_query, query_name, return_value=query_result) as query,
               redirect_stdout(stdout), redirect_stderr(stderr)):
             exit_code = agent_cli.main(["--provider", "gemini", "--show-tools", QUESTION])
 
         self.assertEqual(exit_code, 0, stderr.getvalue())
         client.assert_called_once()
         self.assertEqual(client.call_args.kwargs["max_retries"], 0)
-        query.assert_called_once_with(1)
+        self.assertEqual(query.call_count, 1)
+        self.assertEqual(query.call_args, expected_call)
         self.assertEqual(len(requests_seen), 2)
         self.assertEqual([tool["function"]["name"] for tool in requests_seen[0]["tools"]],
                          ["query_ticket_categories"])
@@ -209,6 +232,7 @@ class AgentCliTests(unittest.TestCase):
         second_messages = requests_seen[1]["messages"]
         replayed = next(call for msg in second_messages for call in (msg.get("tool_calls") or []))
         self.assertEqual(replayed["id"], call_id)
+        self.assertEqual(json.loads(replayed["function"]["arguments"]), arguments)
         self.assertEqual(replayed["extra_content"]["google"]["thought_signature"], signature)
         tool_message = next(msg for msg in second_messages if msg["role"] == "tool")
         self.assertEqual(tool_message["tool_call_id"], call_id)
@@ -216,5 +240,5 @@ class AgentCliTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue(), answer + "\n")
         self.assertEqual(json.loads(stderr.getvalue()), [{
             "tool": "query_ticket_categories", "call_id": call_id,
-            "arguments": {"event_id": 1}, "result": expected_result,
+            "arguments": arguments, "result": expected_result,
         }])

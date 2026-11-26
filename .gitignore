@@ -39,3 +39,5 @@ alltest.run/
 .env
 .env.*
 !.env.example
+
+/.venv/
